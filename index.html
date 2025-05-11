@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Click Recorder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff3333;
+            --primary-dark: #cc0000;
+            --dark: #111111;
+            --darker: #0a0a0a;
+            --light: #ffffff;
+            --gray: #333333;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: radial-gradient(circle at top right, rgba(255, 51, 51, 0.1), transparent 70%);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--dark);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.8s ease;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+        }
+        
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), transparent);
+            border-radius: 2px;
+        }
+        
+        #clickArea {
+            height: 300px;
+            border: 2px dashed var(--primary);
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 51, 51, 0.05);
+            cursor: crosshair;
+            color: var(--light);
+            border-radius: var(--border-radius);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        #clickArea:hover {
+            background-color: rgba(255, 51, 51, 0.08);
+            transform: scale(1.01);
+        }
+        
+        #clickList {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 51, 51, 0.3);
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--light);
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(0, 0, 0, 0.2);
+        }
+        
+        .click-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.2s;
+            animation: fadeIn 0.3s;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .click-item:hover {
+            background-color: rgba(255, 51, 51, 0.1);
+        }
+        
+        .click-item:last-child {
+            border-bottom: none;
+        }
+        
+        .controls {
+            margin: 25px 0;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        button, a#aboutBtn {
+            padding: 14px 24px;
+            background-color: var(--primary);
+            color: var(--light);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(255, 51, 51, 0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover, a#aboutBtn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 51, 51, 0.3);
+        }
+        
+        button:active, a#aboutBtn:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background-color: var(--gray);
+            color: #999;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        #startBtn:not(:disabled) {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            animation: pulse 2s infinite;
+        }
+        
+        a#aboutBtn {
+            text-decoration: none;
+            background-color: rgba(255, 51, 51, 0.2);
+            color: var(--light);
+        }
+        
+        a#aboutBtn:hover {
+            background-color: rgba(255, 51, 51, 0.3);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7);}
+            70% { box-shadow: 0 0 0 15px rgba(255, 51, 51, 0);}
+            100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0);}
+        }
+        
+        @keyframes clickFlash {
+            0% { background-color: var(--primary); color: var(--light);}
+            100% { background-color: rgba(255, 51, 51, 0.05); color: var(--light);}
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .uncopyable {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .uncopyable::before {
+            content: '👆';
+            font-size: 1.5rem;
+        }
+        
+        .panda {
+            width: 120px;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            z-index: 10;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+        }
+        
+        @keyframes jump {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-30px) rotate(5deg); } 
+        }
+        
+        .panda.jumping {
+            animation: jump 0.8s infinite;
+        }
+        
+        .click-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 51, 51, 0.7);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.8;
+            animation: expand 0.5s forwards;
+        }
+        
+        @keyframes expand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        /* Custom scrollbar */
+        #clickList::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #clickList::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        #clickList::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mouse Click Recorder</h1>
+        <div id="clickArea">
+            <span class="uncopyable">Click anywhere in this area to record clicks</span>
+        </div>
+        <img id="panda" src="panda.png" alt="Panda" class="panda">
+        <div class="controls">
+            <button id="startBtn">Start Recording</button>
+            <button id="stopBtn" disabled>Stop Recording</button>
+            <button id="clearBtn">Clear Records</button>
+            <button id="exportJson">Export as JSON</button>
+            <a href="about.html" id="aboutBtn">Keyboard Recorder</a>
+        </div>
+        <div id="clickList"></div>
+    </div>
+
+    <script>
+        const clickArea = document.getElementById('clickArea');
+        const clickList = document.getElementById('clickList');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportJson');
+        const panda = document.getElementById('panda');
+        
+        let isRecording = false;
+        let clickCount = 0;
+        const clicks = [];
+        
+        function addClickRecord(x, y) {
+            // Create a marker at the click position
+            const marker = document.createElement('div');
+            marker.className = 'click-marker';
+            marker.style.left = `${x}px`;
+            marker.style.top = `${y}px`;
+            clickArea.appendChild(marker);
+            
+            // Remove marker after animation completes
+            setTimeout(() => {
+                marker.remove();
+            }, 500);
+            
+            const rect = clickArea.getBoundingClientRect();
+            const relativeX = x - rect.left;
+            const relativeY = y - rect.top;
+            
+            const record = {
+                id: ++clickCount,
+                x: relativeX.toFixed(2),
+                y: relativeY.toFixed(2),
+                time: new Date().toLocaleTimeString()
+            };
+            
+            clicks.push(record);
+            
+            const div = document.createElement('div');
+            div.className = 'click-item';
+            div.innerHTML = `
+                <span>Click #${record.id}</span>
+                <span>Position: (${record.x}, ${record.y})</span>
+                <span>Time: ${record.time}</span>
+            `;
+            
+            clickList.insertBefore(div, clickList.firstChild);
+        }
+        
+        function startRecording() {
+            isRecording = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            // Start panda animation
+            panda.classList.add('jumping');
+            
+            // Disable text selection and context menu
+            document.body.style.userSelect = 'none';
+            document.addEventListener('contextmenu', preventDefaultAction);
+            
+            clickArea.classList.add('recording');
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            // Stop panda animation
+            panda.classList.remove('jumping');
+            
+            // Enable text selection and context menu
+            document.body.style.userSelect = '';
+            document.removeEventListener('contextmenu', preventDefaultAction);
+            
+            clickArea.classList.remove('recording');
+        }
+        
+        function preventDefaultAction(e) {
+            e.preventDefault();
+            return false;
+        }
+        
+        clickArea.addEventListener('click', (e) => {
+            if (isRecording) {
+                addClickRecord(e.clientX, e.clientY);
+                clickArea.classList.add('clicked');
+                setTimeout(() => {
+                    clickArea.classList.remove('clicked');
+                }, 300);
+            }
+        });
+        
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        
+        clearBtn.addEventListener('click', () => {
+            clickList.innerHTML = '';
+            clickCount = 0;
+            clicks.length = 0; // Clear the array
+        });
+        
+        exportBtn.addEventListener('click', () => {
+            if (clicks.length === 0) {
+                alert('No clicks to export yet!');
+                return;
+            }
+            
+            const json = JSON.stringify(clicks, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mouse-clicks.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        
+        // Prevent default left-click behavior when recording
+        document.addEventListener('mousedown', (e) => {
+            if (isRecording && e.button === 0 && !clickArea.contains(e.target)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Prevent copy/paste/cut operations during recording
+        document.addEventListener('copy', (e) => {
+            if (isRecording) e.preventDefault();
+        });
+        
+        document.addEventListener('paste', (e) => {
+            if (isRecording) e.preventDefault();
+        });
+        
+        document.addEventListener('cut', (e) => {
+            if (isRecording) e.preventDefault();
+        });
+    </script>
+</body>
+</html> 
